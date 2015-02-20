@@ -3,15 +3,27 @@
 
 #include <Servo.h>
 
+//Variables for Motor Pins
+
 const int MOTOR_L_1 = 3; // Left 1
 const int MOTOR_L_2 = 4; // Left 2
 const int MOTOR_R_1 = 5; // Right 1
 const int MOTOR_R_2 = 6; // Right 2
 
+//Delay Constant
+
 const int DELAY = 10;
 
-String ReadSerial();
+//Communication Functions
+
+void ReadSerial();
 void SendSerial();
+
+//Motor Functions
+
+void SetMotors();
+
+//Talon Motors
 
 Servo talon_left_1;
 Servo talon_left_2;
@@ -27,39 +39,24 @@ void setup() {
   talon_right_2.attach(MOTOR_R_2);
 }
 
-int GetPower(int input) {
-  if (input > 255) input = 255;
-  if (input < -255) input = -255;
-  
-  int power = input * 90 / 255 + 90;
-  Serial.println(power);
-  
-  return power;
-}
+//IR Values
 
 double irFrontRight = 0.0;
 double irFrontLeft = 0.0;
 double irBackRight = 0.0;
 double irBackLeft = 0.0;
 
+//Motor Values
+
 int motorsLeft = 0;
 int motorsRight = 0;
 
-void SetMotors(int left, int right) {
-  motorsLeft = left;
-  motorsRight = right;
-  
-  int temp_l = GetPower(left);
-  int temp_r = GetPower(right);
-  
-  talon_left_1.write(temp_l);
-  talon_left_r.write(temp_l);
-  talon_right_l.write(temp_r);
-  talon_right_2.write(temp_r);
-}
+//Main Run Loop
 
 void loop() {
-  String input = ReadSerial();
+  ReadSerial();
+  
+  SetMotors();
   
   //CODE GOES HERE
   
@@ -67,10 +64,44 @@ void loop() {
   delay(DELAY);
 }
 
-String ReadSerial() {
-  //CODE GOES HERE
+//Communication Code
+
+void ReadSerial() {
+  if (Serial.available() == 0) return;
   
-  return "";
+  char function = Serial.read();
+  
+  Serial.read(); // Remove extra thingy
+  
+  //Setup for reading numbers
+  char number[10];
+  char c = Serial.read();
+  int i = 0;
+  
+  //Read left motor val
+  
+  while (c != ':') {
+    number[i] = c;
+    c = Serial.read();
+    ++i;
+  }
+  
+  number[i] = '\0';
+  motorsLeft = atoi(number);
+  
+  i = 0;
+  c = Serial.read();
+  
+  while (c != '\n' || c!= '\r') {
+    number[i] = c;
+    c = Serial.read();
+    ++i;
+  }
+  
+  number[i] = '\0';
+  motorsRight = atoi(number);
+  
+  while (Serial.available() > 0) Serial.read();
 }
 
 void SendSerial() {
@@ -91,5 +122,27 @@ void SendSerial() {
   Serial.print("i:3:");
   Serial.print(irBackLeft);
   Serial.print("\n");
+}
+
+//Motor Code
+
+int GetPower(int input) {
+  if (input > 255) input = 255;
+  if (input < -255) input = -255;
+  
+  int power = input * 90 / 255 + 90;
+  Serial.println(power);
+  
+  return power;
+}
+
+void SetMotors() {
+  int temp_l = GetPower(motorsLeft);
+  int temp_r = GetPower(motorsRight);
+  
+  talon_left_1.write(temp_l);
+  talon_left_2.write(temp_l);
+  talon_right_1.write(temp_r);
+  talon_right_2.write(temp_r);
 }
  
