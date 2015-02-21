@@ -3,6 +3,8 @@
 
 #include <Servo.h>
 
+#include <Arduino.h>
+
 //Variables for Motor Pins
 
 const int MOTOR_L_1 = 3; // Left 1
@@ -60,7 +62,7 @@ void loop() {
   
   //CODE GOES HERE
   
-  SendSerial();
+  //SendSerial();
   delay(DELAY);
 }
 
@@ -69,39 +71,18 @@ void loop() {
 void ReadSerial() {
   if (Serial.available() == 0) return;
   
-  char function = Serial.read();
+  String serialInput = Serial.readString();
   
-  Serial.read(); // Remove extra thingy
+  Serial.println(serialInput);
   
-  //Setup for reading numbers
-  char number[10];
-  char c = Serial.read();
-  int i = 0;
+  int colonIndex1 = serialInput.indexOf(':');
+  int colonIndex2 = serialInput.indexOf(':', colonIndex1 + 1);
   
-  //Read left motor val
+  String lValue = serialInput.substring(colonIndex1 + 1, colonIndex2);
+  String rValue = serialInput.substring(colonIndex2 + 1);
   
-  while (c != ':') {
-    number[i] = c;
-    c = Serial.read();
-    ++i;
-  }
-  
-  number[i] = '\0';
-  motorsLeft = atoi(number);
-  
-  i = 0;
-  c = Serial.read();
-  
-  while (c != '\n' || c!= '\r') {
-    number[i] = c;
-    c = Serial.read();
-    ++i;
-  }
-  
-  number[i] = '\0';
-  motorsRight = atoi(number);
-  
-  while (Serial.available() > 0) Serial.read();
+  motorsLeft = lValue.toInt();
+  motorsRight = rValue.toInt();
 }
 
 void SendSerial() {
@@ -131,7 +112,6 @@ int GetPower(int input) {
   if (input < -255) input = -255;
   
   int power = input * 90 / 255 + 90;
-  Serial.println(power);
   
   return power;
 }
