@@ -32,6 +32,14 @@ Servo talon_left_2;
 Servo talon_right_1;
 Servo talon_right_2;
 
+//Serial Communication
+
+const int INPUT_LENGTH = 15;
+char serialInput[INPUT_LENGTH];
+
+const int NUMBER_LENGTH = 5;
+char numberInput[NUMBER_LENGTH];
+
 void setup() {
   Serial.begin(9600);
   
@@ -39,6 +47,8 @@ void setup() {
   talon_left_2.attach(MOTOR_L_2);
   talon_right_1.attach(MOTOR_R_1);
   talon_right_2.attach(MOTOR_R_2);
+  
+  serialInput[INPUT_LENGTH - 1] = '\0';
 }
 
 //IR Values
@@ -52,12 +62,13 @@ double irBackLeft = 0.0;
 
 int motorsLeft = 0;
 int motorsRight = 0;
+int currentLeft = 0;
+int currentRight = 0;
 
 //Main Run Loop
 
 void loop() {
   ReadSerial();
-  
   SetMotors();
   
   //CODE GOES HERE
@@ -71,18 +82,62 @@ void loop() {
 void ReadSerial() {
   if (Serial.available() == 0) return;
   
-  String serialInput = Serial.readString();
+  char *ptr = serialInput;
+  *ptr = Serial.read();
   
-  Serial.println(serialInput);
+  while (*ptr != '\r' && *ptr != '\n') {
+    ++ptr;
+    
+    while (!Serial.available());
+    
+    *ptr = Serial.read();
+  }
   
-  int colonIndex1 = serialInput.indexOf(':');
-  int colonIndex2 = serialInput.indexOf(':', colonIndex1 + 1);
+  ptr = serialInput;
   
-  String lValue = serialInput.substring(colonIndex1 + 1, colonIndex2);
-  String rValue = serialInput.substring(colonIndex2 + 1);
+  if (*ptr == 'd') {
+    ++ptr; // Ignore first char
+    ++ptr; // Ignore first colon
+    
+    //Motors Left
+    
+    char *numPtr = numberInput;
+    
+    while (*ptr != ':' && numPtr - numberInput < NUMBER_LENGTH) {
+      *numPtr = *ptr;
+      ++ptr; ++numPtr;
+    }
+    
+    if (numPtr - numberInput >= NUMBER_LENGTH) goto clearserial;
+    
+    *numPtr = '\0';
+    
+    motorsLeft = atoi(numberInput);
+    
+    //Motors Right
+    
+    ++ptr;
+    
+    numPtr = numberInput;
+    
+    while (*ptr != '\n' && *ptr != '\r' && numPtr - numberInput < NUMBER_LENGTH) {
+      *numPtr = *ptr;
+      ++ptr; ++numPtr;
+    }
+    
+    if (numPtr - numberInput >= NUMBER_LENGTH) goto clearserial;
+    
+    *numPtr = '\0';
+    
+    motorsRight = atoi(numberInput);
+  }
   
-  motorsLeft = lValue.toInt();
-  motorsRight = rValue.toInt();
+  clearserial:
+  
+  while (Serial.available()) Serial.read();
+  
+  //motorsLeft = lValue.toInt();
+  //motorsRight = rValue.toInt();
 }
 
 void SendSerial() {
@@ -117,6 +172,8 @@ int GetPower(int input) {
 }
 
 void SetMotors() {
+  if (currentLeft == motorsLeft && currentRight == motorsRight) return;
+  
   int temp_l = GetPower(motorsLeft);
   int temp_r = GetPower(motorsRight);
   
@@ -124,5 +181,8 @@ void SetMotors() {
   talon_left_2.write(temp_l);
   talon_right_1.write(temp_r);
   talon_right_2.write(temp_r);
+  
+  currentLeft = motorsLeft;
+  currentRight = motorsRight;
 }
  
