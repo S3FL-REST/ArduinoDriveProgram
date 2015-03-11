@@ -68,12 +68,17 @@ int currentRight = 0;
 //Main Run Loop
 
 void loop() {
+  if (!Serial) {
+    motorsLeft = 0;
+    motorsRight = 0;
+  }
+  
   ReadSerial();
   SetMotors();
   
   //CODE GOES HERE
   
-  //SendSerial();
+  SendSerial();
   delay(DELAY);
 }
 
