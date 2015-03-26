@@ -78,7 +78,7 @@ void loop() {
   
   //CODE GOES HERE
   
-  SendSerial();
+  //SendSerial();
   delay(DELAY);
 }
 
