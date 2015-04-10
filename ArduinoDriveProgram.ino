@@ -7,14 +7,14 @@
 
 //Variables for Motor Pins
 
-const int MOTOR_L_1 = 3; // Left 1
-const int MOTOR_L_2 = 4; // Left 2
-const int MOTOR_R_1 = 5; // Right 1
-const int MOTOR_R_2 = 6; // Right 2
+#define MOTOR_L_1 5
+#define MOTOR_L_2 6
+#define MOTOR_R_1 10
+#define MOTOR_R_2 11
 
 //Delay Constant
 
-const int DELAY = 10;
+const int DELAY = 2;
 
 //Communication Functions
 
@@ -29,8 +29,11 @@ void SetMotors();
 
 Servo talon_left_1;
 Servo talon_left_2;
+
 Servo talon_right_1;
 Servo talon_right_2;
+
+int suspension = 0;
 
 //Serial Communication
 
@@ -85,6 +88,8 @@ void loop() {
 //Communication Code
 
 void ReadSerial() {
+  startserial:
+  
   if (Serial.available() == 0) return;
   
   char *ptr = serialInput;
@@ -135,7 +140,13 @@ void ReadSerial() {
     *numPtr = '\0';
     
     motorsRight = atoi(numberInput);
+  } else if (*ptr == 's') {
+    ++ptr;
+    ++ptr;
+    suspension = *ptr - '0';
   }
+  
+  if (Serial.available()) goto startserial;
   
   clearserial:
   
