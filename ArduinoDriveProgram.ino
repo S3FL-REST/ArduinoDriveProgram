@@ -135,7 +135,7 @@ void ReadSerial() {
     
     *numPtr = '\0';
     
-    motorsLeft = atoi(numberInput);
+    motorsLeft = -atoi(numberInput);
     
     //Motors Right
     
