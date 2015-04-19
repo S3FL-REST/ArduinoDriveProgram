@@ -2,6 +2,7 @@
 //Arduino Setup Code
 
 #include <Servo.h>
+#include "linearactuator.h"
 
 #include <Arduino.h>
 
@@ -11,6 +12,11 @@
 #define MOTOR_L_2 6
 #define MOTOR_R_1 10
 #define MOTOR_R_2 11
+
+#define SUS_1_A 2
+#define SUS_1_B 3
+#define SUS_2_A 8
+#define SUS_2_B 9
 
 //Delay Constant
 
@@ -33,7 +39,8 @@ Servo talon_left_2;
 Servo talon_right_1;
 Servo talon_right_2;
 
-int suspension = 0;
+LinearActuator sus_1;
+LinearActuator sus_2;
 
 //Serial Communication
 
@@ -50,6 +57,9 @@ void setup() {
   talon_left_2.attach(MOTOR_L_2);
   talon_right_1.attach(MOTOR_R_1);
   talon_right_2.attach(MOTOR_R_2);
+  
+  l_attach(sus_1, SUS_1_A, SUS_1_B);
+  l_attach(sus_2, SUS_2_A, SUS_2_B);
   
   serialInput[INPUT_LENGTH - 1] = '\0';
 }
@@ -78,6 +88,9 @@ void loop() {
   
   ReadSerial();
   SetMotors();
+  
+  l_move(sus_1);
+  l_move(sus_2);
   
   //CODE GOES HERE
   
@@ -143,7 +156,15 @@ void ReadSerial() {
   } else if (*ptr == 's') {
     ++ptr;
     ++ptr;
-    suspension = *ptr - '0';
+    
+    char *numPtr = numberInput;
+    *numPtr = *ptr;
+    *(++numPtr) = '\0';
+    
+    L_Movements dir = static_cast<L_Movements>(atoi(numberInput));
+    
+    l_dir(sus_1, dir);
+    l_dir(sus_2, dir);
   }
   
   if (Serial.available()) goto startserial;
